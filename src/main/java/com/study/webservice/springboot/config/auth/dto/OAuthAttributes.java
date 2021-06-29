@@ -11,6 +11,7 @@ import java.util.Map;
 public class OAuthAttributes {
     private Map<String, Object> attributes;
     private String nameAttributeKey;
+    private String userId;
     private String name;
     private String email;
     private String picture;
@@ -18,12 +19,14 @@ public class OAuthAttributes {
     @Builder
     public OAuthAttributes(Map<String, Object> attributes,
                            String nameAttributeKey,
+                           String userId,
                            String name,
                            String email,
                            String picture) {
 
         this.attributes = attributes;
         this.nameAttributeKey = nameAttributeKey;
+        this.userId = userId;
         this.name = name;
         this.email = email;
         this.picture = picture;
@@ -33,6 +36,10 @@ public class OAuthAttributes {
                                      String userNameAttributeName,
                                      Map<String, Object> attributes){
 
+        if("facebook".equals(registrationId)) {
+            return ofFacebook(userNameAttributeName, attributes);
+        }
+
         return ofGoogle(userNameAttributeName, attributes);
     }
 
@@ -40,6 +47,7 @@ public class OAuthAttributes {
                                             Map<String, Object> attributes) {
 
         return OAuthAttributes.builder()
+                .userId((String) attributes.get("sub"))
                 .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
                 .picture((String) attributes.get("picture"))
@@ -48,8 +56,20 @@ public class OAuthAttributes {
                 .build();
     }
 
+    private static OAuthAttributes ofFacebook(String userNameAttributeName,
+                                              Map<String, Object> attributes) {
+        return OAuthAttributes.builder()
+                .userId((String) attributes.get("id"))
+                .name((String) attributes.get("name"))
+                .email((String) attributes.get("email"))
+                .attributes(attributes)
+                .nameAttributeKey(userNameAttributeName)
+                .build();
+    }
+
     public User toEntity() {
         return User.builder()
+                .userId(userId)
                 .name(name)
                 .email(email)
                 .picture(picture)

@@ -36,12 +36,22 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
+
+        log.info("registrationId:   " + registrationId);
+
         String userNameAttributeName = userRequest.getClientRegistration()
                 .getProviderDetails()
                 .getUserInfoEndpoint()
                 .getUserNameAttributeName();
 
+        log.info("userNameAttributeName : " + userNameAttributeName);
+        log.info(String.valueOf(userRequest.getClientRegistration()));
+        log.info(userRequest.getClientRegistration().getProviderDetails().toString());
+        log.info(userRequest.getClientRegistration().getProviderDetails().getUserInfoEndpoint().toString());
+
         OAuthAttributes attributes = OAuthAttributes.of(registrationId, userNameAttributeName, oAuth2User.getAttributes());
+
+        oAuth2User.getAttributes().forEach((k,v) -> log.info("key: " + k + "    value: " + v));
 
         User user = saveOrUpdate(attributes);
 
@@ -54,7 +64,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     }
 
     private User saveOrUpdate(OAuthAttributes attributes) {
-        User user = userRepository.findByEmail(attributes.getEmail())
+        User user = userRepository.findByEmailUserId(attributes.getEmail(), attributes.getUserId())
                 .map(entity -> entity.update(attributes.getName(), attributes.getPicture()))
                 .orElse(attributes.toEntity());
 
